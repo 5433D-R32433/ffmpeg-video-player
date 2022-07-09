@@ -1,4 +1,12 @@
+
+#ifdef WIN32 
 #include <Windows.h>
+#endif
+
+#ifdef _UNIX
+#include <unsistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,19 +55,19 @@ typedef struct packet_queue_t
     AVPacketList *last_packet;
     S32           num_packets;
     S32           size;
-	SDL_mutex    *mutex;
+    SDL_mutex    *mutex;
     SDL_cond     *condition;
-	
+
 } packet_queue_t;
 
 
 typedef struct video_picture_t
 {
     AVFrame    *frame;
-	S32         width;
-	S32         height;
-	bool32      allocated;
-	F64         pts;
+    S32         width;
+    S32         height; 
+    bool32      allocated;
+    F64         pts;
 	
 } video_picture_t;
 
@@ -68,7 +76,7 @@ typedef struct media_state_t
 {
     AVFormatContext    *fmt_ctx;
 	
-	S32                 audio_stream_index;
+    S32                 audio_stream_index;
     AVStream           *audio_stream;
     AVCodecContext     *audio_codec_ctx;
 	packet_queue_t      audio_queue;
@@ -581,7 +589,7 @@ int packet_queue_put ( packet_queue_t *queue, AVPacket *packet )
     return 0;
 }
 
-static int packet_queue_get ( packet_queue_t *queue, AVPacket *packet, int block )
+int packet_queue_get ( packet_queue_t *queue, AVPacket *packet, int block )
 {
 	S32 ret                      = 0;
     AVPacketList *av_packet_list = 0;
@@ -1005,9 +1013,9 @@ void video_refresh_timer ( void *userdata )
 {
     media_state_t   *media_state   = ( media_state_t* ) userdata;
     video_picture_t *video_picture = 0;
-	
+#ifdef WIN32	
 	HANDLE hc = GetStdHandle ( STD_OUTPUT_HANDLE );
-	
+#endif
 	
     F64 pts_delay         = 0;
     F64 audio_ref_clock   = 0;
@@ -1025,9 +1033,11 @@ void video_refresh_timer ( void *userdata )
         else
         {
             video_picture = &media_state->picture_queue [ media_state->picture_queue_read_index ];
-			
-			SetConsoleTextAttribute  ( hc, 2 );
-			
+	
+#ifdef WIN32		
+	    SetConsoleTextAttribute  ( hc, 2 );
+#endif
+		
 			printf ( "Current Frame PTS:      %f\n",   video_picture->pts        );
             printf ( "Last Frame    PTS:      %f\n", media_state->frame_last_pts );
 			
@@ -1093,9 +1103,9 @@ void video_refresh_timer ( void *userdata )
             {
                 media_state->picture_queue_read_index = 0 ;
             }
-			
+#ifdef WIN32			
 			SetConsoleTextAttribute  ( hc, 7 );
-			
+#endif		
             SDL_LockMutex ( media_state->picture_queue_mutex );
 			
             media_state->picture_queue_size--;
@@ -1441,11 +1451,16 @@ int main ( int argc, char **argv )
     {
 		
 #ifdef WIN32
-		SetConsoleTextAttribute  ( hc, 2 );
-        printf  ( "\n5433D R32433 <saeed@rezaee.net>\n" );
-		SetConsoleTextAttribute  ( hc, 6 );
-		fprintf ( stderr, "Usage: %s video_file_path\n", argv [ 0 ] );
-		SetConsoleTextAttribute  ( hc, 7 );
+	SetConsoleTextAttribute  ( hc, 2 );
+#endif        
+printf  ( "\n5433D R32433 <saeed@rezaee.net>\n" );
+
+#ifdef WIN32
+	SetConsoleTextAttribute  ( hc, 6 );
+#endif
+	fprintf ( stderr, "Usage: %s video_file_path\n", argv [ 0 ] );	
+#ifdef WIN32 
+	SetConsoleTextAttribute  ( hc, 7 );
 #endif
 		
 		return -1;
