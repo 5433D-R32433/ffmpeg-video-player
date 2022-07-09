@@ -1,0 +1,5 @@
+*.obj
+*.exp
+*.ilk
+*.lib
+*.pdb
